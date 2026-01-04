@@ -23,6 +23,18 @@ export default createGlobalStyle`
             ${createCssDefinition(darkColors)}
             ${createCssDefinition(darkShadows)}
         `}
+
+        // Custom theme falls back to system preference
+        &[data-theme="custom"] {
+            @media (prefers-color-scheme: light) {
+                ${createCssDefinition(colors)}
+                ${createCssDefinition(shadows)}
+            }
+            @media (prefers-color-scheme: dark) {
+                ${createCssDefinition(darkColors)}
+                ${createCssDefinition(darkShadows)}
+            }
+        }
         
         scrollbar-color: ${theme.colors["gray-700"]} transparent;
         scrollbar-width: thin;

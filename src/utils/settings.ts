@@ -29,14 +29,6 @@ export const Muted: Setting<boolean> = Object.freeze({
     __INITIAL_VALUE__: false,
 });
 
-export const ColorTheme: Setting<string> = Object.freeze({
-    __KEY__: "theme",
-    __INITIAL_VALUE__: "system",
-    SYSTEM: "system",
-    DARK: "dark",
-    LIGHT: "light",
-});
-
 export const AudioMode: Setting<string> = Object.freeze({
     __KEY__: "audioMode",
     __INITIAL_VALUE__: "disabled",
