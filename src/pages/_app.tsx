@@ -23,6 +23,7 @@ import { YearNavigation } from "@/components/navigation/YearNavigation";
 import { SEO } from "@/components/seo/SEO";
 import { Text } from "@/components/text/Text";
 import { ToastHub } from "@/components/toast/ToastHub";
+import { CustomThemeStyle } from "@/components/utils/CustomThemeStyle";
 import { ErrorBoundary } from "@/components/utils/ErrorBoundary";
 import { PageRevalidation } from "@/components/utils/PageRevalidation";
 import { VideoPlayer } from "@/components/video-player/VideoPlayer";
@@ -250,6 +251,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
             ]}
         >
             <GlobalStyle />
+            <CustomThemeStyle />
             <SEO />
             <Head>
                 <link rel="apple-touch-icon" sizes="180x180" href={withBasePath("/apple-touch-icon.png")} />

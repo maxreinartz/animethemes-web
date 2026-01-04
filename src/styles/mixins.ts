@@ -45,7 +45,7 @@ export const withColorTheme =
     `;
 
 export const defineColorTheme =
-    (colorTheme: "light" | "dark") =>
+    (colorTheme: "light" | "dark" | "custom") =>
     <T extends object>(...args: Parameters<typeof css<T>>) => css`
         &[data-theme="system"] {
             @media (prefers-color-scheme: ${colorTheme}) {

@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-export type ColorTheme = "system" | "light" | "dark";
+export type ColorTheme = "system" | "light" | "dark" | "custom";
 
 interface IColorThemeContext {
     colorTheme: ColorTheme;
@@ -20,5 +20,5 @@ export function isColorTheme(value?: string | null): value is ColorTheme {
     if (!value) {
         return false;
     }
-    return ["system", "light", "dark"].includes(value);
+    return ["system", "light", "dark", "custom"].includes(value);
 }

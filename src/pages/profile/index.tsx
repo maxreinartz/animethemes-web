@@ -1,12 +1,16 @@
-import { memo, useState } from "react";
+import { memo, useContext, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import type { GetServerSideProps } from "next";
 
 import {
     faCircleExclamation,
+    faDownload,
     faEllipsisVertical,
+    faFileExport,
     faRightFromBracket,
     faTrash,
+    faUpload,
+    faXmark
 } from "@fortawesome/free-solid-svg-icons";
 import { isAxiosError } from "axios";
 import gql from "graphql-tag";
@@ -34,8 +38,10 @@ import { SearchFilterGroup } from "@/components/search-filter/SearchFilterGroup"
 import { SEO } from "@/components/seo/SEO";
 import { Text } from "@/components/text/Text";
 import { Busy } from "@/components/utils/Busy";
+import ColorThemeContext from "@/context/colorThemeContext";
 import type { ProfilePageMeQuery, ProfilePageQuery } from "@/generated/graphql";
 import useAuth from "@/hooks/useAuth";
+import useCustomTheme from "@/hooks/useCustomTheme";
 import useLocalPlaylist from "@/hooks/useLocalPlaylist";
 import useSetting from "@/hooks/useSetting";
 import type { WatchHistory } from "@/hooks/useWatchHistory";
@@ -46,7 +52,7 @@ import { fetchData } from "@/lib/server";
 import theme from "@/theme";
 import type { SharedPageProps } from "@/utils/getSharedPageProps";
 import getSharedPageProps from "@/utils/getSharedPageProps";
-import { ColorTheme, FeaturedThemePreview, ShowAnnouncements } from "@/utils/settings";
+import { FeaturedThemePreview, ShowAnnouncements } from "@/utils/settings";
 import type { RequiredNonNullable } from "@/utils/types";
 
 const StyledProfileGrid = styled.div`
@@ -172,7 +178,7 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
 
     const [showAnnouncements, setShowAnnouncements] = useSetting(ShowAnnouncements);
     const [featuredThemePreview, setFeaturedThemePreview] = useSetting(FeaturedThemePreview);
-    const [colorTheme, setColorTheme] = useSetting(ColorTheme);
+    const { colorTheme, setColorTheme } = useContext(ColorThemeContext);
 
     const roles = (me.user?.roles ?? [])
         .filter((role) => !role.default)
@@ -180,6 +186,24 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
     const highlightColor = roles[0]?.color ?? "";
 
     const isNewUser = !!me.user && (Date.now() - Date.parse(me.user.created_at)) / (1000 * 60 * 60 * 24) < 1;
+
+    const { importTheme, exportTheme, exportTemplate, clearTheme, customColors, metadata } = useCustomTheme();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [importError, setImportError] = useState<string | null>(null);
+
+    const handleThemeImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImportError(null);
+            const upload = await importTheme(file);
+            if (upload) {
+                setColorTheme("custom");
+            } else {
+                setImportError("Failed to import theme. Please make sure the file is a valid JSON theme file.");
+            }
+        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
     return (
         <>
@@ -295,9 +319,10 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
                             <SearchFilter>
                                 <Text>Color Theme</Text>
                                 <Listbox value={colorTheme} onValueChange={setColorTheme}>
-                                    <ListboxOption value={ColorTheme.SYSTEM}>System</ListboxOption>
-                                    <ListboxOption value={ColorTheme.DARK}>Dark</ListboxOption>
-                                    <ListboxOption value={ColorTheme.LIGHT}>Light</ListboxOption>
+                                    <ListboxOption value="system">System</ListboxOption>
+                                    <ListboxOption value="dark">Dark</ListboxOption>
+                                    <ListboxOption value="light">Light</ListboxOption>
+                                    <ListboxOption value="custom">Custom</ListboxOption>
                                 </Listbox>
                             </SearchFilter>
                             <SearchFilter>
@@ -318,6 +343,76 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
                         </SearchFilterGroup>
                     </Column>
                     <Column style={{ "--gap": "24px" }}>
+                        {colorTheme === "custom" && (
+                            <Column style={{ "--gap": "16px" }}>
+                                <Text variant="h2">Custom Theme</Text>
+                                {(metadata.name || metadata.author || metadata.description || metadata.version) && (
+                                    <Card>
+                                        <Row style={{ "--gap": "16px", "--justify-content": "space-between", "--align-items": "flex-start" }}>
+                                            <Column style={{ "--gap": "8px" }}>
+                                                {metadata.name && metadata.author && (
+                                                    <Text weight="bold">{metadata.name} <Text color="text-muted">by </Text><Text weight="bold">{metadata.author}</Text></Text>
+                                                )}
+                                                {metadata.description && metadata.version && (
+                                                    <Text color="text-muted">{metadata.description}</Text>
+                                                )}
+                                            </Column>
+                                            <IconTextButton
+                                                icon={faXmark}
+                                                variant="silent"
+                                                isCircle
+                                                onClick={() => {
+                                                    clearTheme();
+                                                }}
+                                                title="Remove custom theme"
+                                            />
+                                        </Row>
+                                    </Card>
+                                )}
+                                <Column style={{ "--gap": "8px" }}>
+                                    <Row style={{ "--gap": "8px" }}>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept=".json"
+                                            onChange={handleThemeImport}
+                                            style={{ display: "none" }}
+                                        />
+                                        <IconTextButton
+                                            icon={faUpload}
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            Import
+                                        </IconTextButton>
+                                        {Object.keys(customColors).length > 0 && (
+                                            <IconTextButton icon={faDownload} onClick={exportTheme}>
+                                                Export
+                                            </IconTextButton>
+                                        )}
+                                        <Menu modal={false}>
+                                            <MenuTrigger asChild>
+                                                <IconTextButton icon={faFileExport}>
+                                                    Template
+                                                </IconTextButton>
+                                            </MenuTrigger>
+                                            <MenuContent>
+                                                <MenuItem onSelect={() => exportTemplate("light")}>
+                                                    <Text>Light Theme</Text>
+                                                </MenuItem>
+                                                <MenuItem onSelect={() => exportTemplate("dark")}>
+                                                    <Text>Dark Theme</Text>
+                                                </MenuItem>
+                                            </MenuContent>
+                                        </Menu>
+                                    </Row>
+                                    {importError && (
+                                        <Text color="text-warning">
+                                            <Icon icon={faCircleExclamation} /> {importError}
+                                        </Text>
+                                    )}
+                                </Column>
+                            </Column>
+                        )}
                         <Text variant="h2">Legacy</Text>
                         <SummaryCard
                             title="Local Playlist"
