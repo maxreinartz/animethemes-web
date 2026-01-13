@@ -28,6 +28,7 @@ import { PasswordChangeDialog } from "@/components/dialog/PasswordChangeDialog";
 import { PlaylistAddDialog } from "@/components/dialog/PlaylistAddDialog";
 import { PlaylistRemoveDialog } from "@/components/dialog/PlaylistRemoveDialog";
 import { RegisterDialog } from "@/components/dialog/RegisterDialog";
+import { ThemeWarningDialog } from "@/components/dialog/ThemeWarning";
 import { UserInformationDialog } from "@/components/dialog/UserInformationDialog";
 import { Icon } from "@/components/icon/Icon";
 import { ProfileImage } from "@/components/image/ProfileImage";
@@ -378,12 +379,14 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
                                             onChange={handleThemeImport}
                                             style={{ display: "none" }}
                                         />
-                                        <IconTextButton
-                                            icon={faUpload}
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            Import
-                                        </IconTextButton>
+                                        <ThemeWarningDialog
+                                            trigger={
+                                                <IconTextButton icon={faUpload}>
+                                                    Import
+                                                </IconTextButton>
+                                            }
+                                            onConfirm={() => fileInputRef.current?.click()}
+                                        />
                                         {Object.keys(customColors).length > 0 && (
                                             <IconTextButton icon={faDownload} onClick={exportTheme}>
                                                 Export
