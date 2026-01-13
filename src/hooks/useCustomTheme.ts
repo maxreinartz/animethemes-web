@@ -13,10 +13,10 @@ export interface ThemeMetadata {
     description?: string;
     version?: string;
     backgroundImage?: string;
-    backgroundOpacity?: number;
     backgroundBlur?: number;
     backgroundPosition?: string;
     backgroundSize?: string;
+    backgroundOverlay?: string;
 }
 
 export interface CustomTheme extends ThemeMetadata {
@@ -35,10 +35,10 @@ const METADATA_KEYS = [
     "description",
     "version",
     "backgroundImage",
-    "backgroundOpacity",
     "backgroundBlur",
     "backgroundPosition",
     "backgroundSize",
+    "backgroundOverlay",
 ];
 
 export default function useCustomTheme() {
@@ -113,6 +113,20 @@ export default function useCustomTheme() {
         URL.revokeObjectURL(url);
     }, [customColors, metadata]);
 
+    const hexToRgb = (hex: string) => {
+        const h = hex.replace("#", "");
+        const n = parseInt(h.length <= 4 ? [...h].map(c => c + c).join("") : h, 16);
+        
+        // Check if it contains alpha
+        const hasAlpha = hex.length === 5 || hex.length === 9;
+
+        if (!hasAlpha) {
+            // Simple hex to rgb
+            return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+        }
+        return `rgba(${(n >> 24) & 255}, ${(n >> 16) & 255}, ${(n >> 8) & 255}, ${+(n & 255) / 255})`;
+    };
+
     const exportTemplate = useCallback((template: "light" | "dark") => {
         const templateColors = template === "dark" ? darkColors : colors;
         const templateShadows = template === "dark" ? darkShadows : shadows;
@@ -122,17 +136,22 @@ export default function useCustomTheme() {
             cleanedShadows[key] = value.replace(/\s+/g, " ").trim();
         }
 
+        const rgbaColors: Record<string, string> = {};
+        for (const [key, value] of Object.entries(templateColors)) {
+            rgbaColors[key] = value.startsWith("#") ? hexToRgb(value) : value;
+        }
+
         const fullTemplate = {
             name: template,
             author: "AnimeThemes",
             description: "Default theme template.",
             version: "1.0.0",
             backgroundImage: "",
-            backgroundOpacity: 0,
             backgroundBlur: 0,
             backgroundPosition: "center",
             backgroundSize: "cover",
-            ...templateColors,
+            backgroundOverlay: "",
+            ...rgbaColors,
             ...cleanedShadows,
         };
         const blob = new Blob([JSON.stringify(fullTemplate, null, 2)], { type: "application/json" });

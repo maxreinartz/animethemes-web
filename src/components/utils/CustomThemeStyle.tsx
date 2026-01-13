@@ -15,29 +15,30 @@ const CustomThemeGlobalStyle = createGlobalStyle<{ $colors: Record<string, strin
 
 const BackgroundImageStyle = createGlobalStyle<{
     $backgroundImage: string;
-    $backgroundOpacity: number;
     $backgroundBlur: number;
     $backgroundPosition: string;
     $backgroundSize: string;
+    $backgroundOverlay?: string;
 }>`
     body::before {
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: ${(props) => props.$backgroundBlur ? `-${props.$backgroundBlur * 2}px` : 0};
         z-index: -1;
         pointer-events: none;
         
-        background-image: url(${(props) => props.$backgroundImage});
+        background-image: ${(props) =>
+            props.$backgroundOverlay
+                ? `linear-gradient(${props.$backgroundOverlay}, ${props.$backgroundOverlay}), url(${props.$backgroundImage})`
+                : `url(${props.$backgroundImage})`};
         background-position: ${(props) => props.$backgroundPosition};
         background-size: ${(props) => props.$backgroundSize};
         background-repeat: no-repeat;
-        background-attachment: fixed;
         
-        opacity: ${(props) => props.$backgroundOpacity};
-        filter: blur(${(props) => props.$backgroundBlur}px);
+        filter: ${(props) => props.$backgroundBlur ? `blur(${props.$backgroundBlur}px)` : "none"};
+        clip-path: ${(props) => props.$backgroundBlur // Prevents blur bleeding
+            ? `inset(${props.$backgroundBlur * 2}px)` 
+            : "none"};
     }
 `;
 
@@ -57,10 +58,10 @@ export function CustomThemeStyle() {
             {metadata.backgroundImage && (
                 <BackgroundImageStyle
                     $backgroundImage={metadata.backgroundImage}
-                    $backgroundOpacity={metadata.backgroundOpacity ?? 0.15}
                     $backgroundBlur={metadata.backgroundBlur ?? 0}
                     $backgroundPosition={metadata.backgroundPosition ?? "center"}
                     $backgroundSize={metadata.backgroundSize ?? "cover"}
+                    $backgroundOverlay={metadata.backgroundOverlay}
                 />
             )}
         </>
