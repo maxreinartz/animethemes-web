@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from "react";
 import type { ReactNode } from "react";
 import styled from "styled-components";
+import Link from "next/link";
 
 import gql from "graphql-tag";
 
@@ -53,7 +54,13 @@ export default function PlaylistSummaryCard({
     const description = (
         <SummaryCard.Description>
             <span>Playlist</span>
-            {showOwner ? <Text link>{playlist.user.name}</Text> : <span>{playlist.visibility}</span>}
+            {showOwner ? (
+                <Link href={`/user/${playlist.user.name}`} onClick={(event) => event.stopPropagation()}>
+                    <Text link>{playlist.user.name}</Text>
+                </Link>
+            ) : (
+                <span>{playlist.visibility}</span>
+            )}
             <span>
                 {playlist.tracks_count} theme{playlist.tracks_count !== 1 ? "s" : null}
             </span>

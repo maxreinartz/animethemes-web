@@ -1,6 +1,7 @@
 import { memo, startTransition, useCallback, useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 import type { GetServerSideProps } from "next";
+import Link from "next/link";
 import { useRouter } from "next/router";
 
 import {
@@ -352,7 +353,9 @@ export default function PlaylistDetailPage({ playlist: initialPlaylist, me: init
                     )}
                     <DescriptionList>
                         <DescriptionList.Item title="Playlist by">
-                            <Text link>{playlist.user.name}</Text>
+                            <Link href={`/user/${playlist.user.name}`}>
+                                <Text link>{playlist.user.name}</Text>
+                            </Link>
                         </DescriptionList.Item>
                     </DescriptionList>
                 </Column>
