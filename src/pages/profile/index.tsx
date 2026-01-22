@@ -7,6 +7,7 @@ import {
     faDownload,
     faEllipsisVertical,
     faFileExport,
+    faLink,
     faRightFromBracket,
     faTrash,
     faUpload,
@@ -28,6 +29,7 @@ import { PasswordChangeDialog } from "@/components/dialog/PasswordChangeDialog";
 import { PlaylistAddDialog } from "@/components/dialog/PlaylistAddDialog";
 import { PlaylistRemoveDialog } from "@/components/dialog/PlaylistRemoveDialog";
 import { RegisterDialog } from "@/components/dialog/RegisterDialog";
+import { ThemeImportUrlDialog } from "@/components/dialog/ThemeImportUrlDialog";
 import { ThemeWarningDialog } from "@/components/dialog/ThemeWarning";
 import { UserInformationDialog } from "@/components/dialog/UserInformationDialog";
 import { Icon } from "@/components/icon/Icon";
@@ -188,7 +190,7 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
 
     const isNewUser = !!me.user && (Date.now() - Date.parse(me.user.created_at)) / (1000 * 60 * 60 * 24) < 1;
 
-    const { importTheme, exportTheme, exportTemplate, clearTheme, customColors, metadata } = useCustomTheme();
+    const { importTheme, importThemeFromUrl, exportTheme, exportTemplate, clearTheme, customColors, metadata } = useCustomTheme();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [importError, setImportError] = useState<string | null>(null);
 
@@ -204,6 +206,15 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
             }
         }
         if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleUrlImport = async (url: string) => {
+        setImportError(null);
+        const success = await importThemeFromUrl(url);
+        if (success) {
+            setColorTheme("custom");
+        }
+        return success;
     };
 
     return (
@@ -379,14 +390,33 @@ export default function ProfilePage({ me: initialMe }: ProfilePageProps) {
                                             onChange={handleThemeImport}
                                             style={{ display: "none" }}
                                         />
-                                        <ThemeWarningDialog
-                                            trigger={
+                                        <Menu modal={false}>
+                                            <MenuTrigger asChild>
                                                 <IconTextButton icon={faUpload}>
                                                     Import
                                                 </IconTextButton>
-                                            }
-                                            onConfirm={() => fileInputRef.current?.click()}
-                                        />
+                                            </MenuTrigger>
+                                            <MenuContent>
+                                                <ThemeWarningDialog
+                                                    trigger={
+                                                        <MenuItem onSelect={(event) => event.preventDefault()}>
+                                                            <Icon icon={faUpload} />
+                                                            <Text>From File</Text>
+                                                        </MenuItem>
+                                                    }
+                                                    onConfirm={() => fileInputRef.current?.click()}
+                                                />
+                                                <ThemeImportUrlDialog
+                                                    trigger={
+                                                        <MenuItem onSelect={(event) => event.preventDefault()}>
+                                                            <Icon icon={faLink} />
+                                                            <Text>From URL</Text>
+                                                        </MenuItem>
+                                                    }
+                                                    onImport={handleUrlImport}
+                                                />
+                                            </MenuContent>
+                                        </Menu>
                                         {Object.keys(customColors).length > 0 && (
                                             <IconTextButton icon={faDownload} onClick={exportTheme}>
                                                 Export

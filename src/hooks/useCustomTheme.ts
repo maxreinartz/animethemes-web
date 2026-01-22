@@ -65,39 +65,59 @@ export default function useCustomTheme() {
         }
     }, [colorTheme, customColors]);
 
+    const parseThemeJson = useCallback((json: unknown): boolean => {
+        try {
+            if (typeof json === "object" && json !== null) {
+                const colorsToImport: CustomThemeColors = {};
+                const metadataToImport: ThemeMetadata = {};
+
+                for (const [key, value] of Object.entries(json)) {
+                    if (METADATA_KEYS.includes(key)) {
+                        if (typeof value === "string" || typeof value === "number") {
+                            metadataToImport[key as keyof ThemeMetadata] = value as never;
+                        }
+                    } else if (typeof value === "string") {
+                        colorsToImport[key as keyof Colors] = value;
+                    }
+                }
+
+                setCustomColors(colorsToImport);
+                setMetadata(metadataToImport);
+                return true;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    }, [setCustomColors, setMetadata]);
+
     const importTheme = useCallback((file: File): Promise<boolean> => {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const json = JSON.parse(e.target?.result as string);
-                    if (typeof json === "object" && json !== null) {
-                        const colorsToImport: CustomThemeColors = {};
-                        const metadataToImport: ThemeMetadata = {};
-
-                        for (const [key, value] of Object.entries(json)) {
-                            if (METADATA_KEYS.includes(key)) {
-                                if (typeof value === "string" || typeof value === "number") {
-                                    metadataToImport[key as keyof ThemeMetadata] = value as never;
-                                }
-                            } else if (typeof value === "string") {
-                                colorsToImport[key as keyof Colors] = value;
-                            }
-                        }
-
-                        setCustomColors(colorsToImport);
-                        setMetadata(metadataToImport);
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
+                    resolve(parseThemeJson(json));
                 } catch {
                     resolve(false);
                 }
             };
             reader.readAsText(file);
         });
-    }, [setCustomColors, setMetadata]);
+    }, [parseThemeJson]);
+
+    const importThemeFromUrl = useCallback(async (url: string): Promise<boolean> => {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                return false;
+            }
+            const json = await response.json();
+            return parseThemeJson(json);
+        } catch {
+            return false;
+        }
+    }, [parseThemeJson]);
 
     const exportTheme = useCallback(() => {
         const themeWithMetadata = {
@@ -177,6 +197,7 @@ export default function useCustomTheme() {
         metadata,
         setMetadata,
         importTheme,
+        importThemeFromUrl,
         exportTheme,
         exportTemplate,
         clearTheme,

@@ -22,7 +22,7 @@ export function ThemeWarningDialog({ trigger, onConfirm }: ThemeWarningDialogPro
             <DialogContent title="Import Custom Theme">
                 <Column style={{ "--gap": "24px" }}>
                     <Text>
-                        Importing custom themes can pose security risks. They may contain malicious code or
+                        Importing custom themes can pose security risks as they may contain malicious code or
                         inappropriate content. Please ensure that you trust the source of the theme before importing.
                     </Text>
                     <Row $wrap style={{ "--gap": "8px", "--justify-content": "flex-end" }}>
